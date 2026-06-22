@@ -1,5 +1,7 @@
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.ComponentOrientation;
+import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -148,5 +150,26 @@ public class UITheme {
             BorderFactory.createLineBorder(new Color(200, 200, 200)),
             BorderFactory.createEmptyBorder(6, 10, 6, 10)));
         field.setBackground(WHITE);
+    }
+
+    /**
+     * Font suitable for Arabic text rendering.
+     */
+    public static final Font FONT_ARABIC = new Font("Segoe UI", Font.PLAIN, 13);
+    public static final Font FONT_ARABIC_BOLD = new Font("Segoe UI", Font.BOLD, 13);
+    public static final Font FONT_ARABIC_TITLE = new Font("Segoe UI", Font.BOLD, 22);
+
+    /**
+     * Applies RTL component orientation recursively to a container and all its children.
+     *
+     * @param container the root container to apply RTL orientation to
+     */
+    public static void applyRTL(Container container) {
+        container.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
+        for (java.awt.Component comp : container.getComponents()) {
+            if (comp instanceof Container) {
+                applyRTL((Container) comp);
+            }
+        }
     }
 }

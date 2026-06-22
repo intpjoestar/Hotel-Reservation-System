@@ -1,6 +1,7 @@
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
@@ -15,11 +16,6 @@ import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 
-/**
- * Login window for the Hotel Reservation System.
- * Validates user credentials against the {@link HotelSystem} and opens
- * the {@link DashboardFrame} upon successful authentication.
- */
 public class LoginFrame extends JFrame {
 
     private HotelSystem system;
@@ -28,25 +24,17 @@ public class LoginFrame extends JFrame {
     private JPasswordField passwordField;
     private JLabel messageLabel;
 
-    /**
-     * Constructs and displays the login window.
-     *
-     * @param system the core HotelSystem for authentication
-     * @param db     the DatabaseManager for database operations
-     */
     public LoginFrame(HotelSystem system, DatabaseManager db) {
         this.system = system;
         this.db = db;
         buildUI();
+        UITheme.applyRTL(getContentPane());
         setVisible(true);
     }
 
-    /**
-     * Builds the login form UI components and layout.
-     */
     private void buildUI() {
-        setTitle("Hotel California - Login");
-        setSize(500, 420);
+        setTitle(Strings.LOGIN_WINDOW_TITLE);
+        setSize(500, 480);
         setResizable(false);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
@@ -62,17 +50,17 @@ public class LoginFrame extends JFrame {
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setBorder(BorderFactory.createEmptyBorder(30, 35, 30, 35));
 
-        JLabel titleLabel = new JLabel("HOTEL CALIFORNIA");
+        JLabel titleLabel = new JLabel(Strings.LOGIN_TITLE);
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 26));
         titleLabel.setForeground(UITheme.SECONDARY);
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JLabel subLabel = new JLabel("Management Portal");
+        JLabel subLabel = new JLabel(Strings.LOGIN_SUBTITLE);
         subLabel.setFont(UITheme.FONT_SMALL);
         subLabel.setForeground(Color.GRAY);
         subLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JLabel userLabel = new JLabel("Username");
+        JLabel userLabel = new JLabel(Strings.LOGIN_USERNAME);
         userLabel.setFont(UITheme.FONT_LABEL);
         userLabel.setForeground(UITheme.TEXT_DARK);
         userLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -81,7 +69,7 @@ public class LoginFrame extends JFrame {
         usernameField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         UITheme.styleTextField(usernameField);
 
-        JLabel passLabel = new JLabel("Password");
+        JLabel passLabel = new JLabel(Strings.LOGIN_PASSWORD);
         passLabel.setFont(UITheme.FONT_LABEL);
         passLabel.setForeground(UITheme.TEXT_DARK);
         passLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -90,10 +78,16 @@ public class LoginFrame extends JFrame {
         passwordField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         UITheme.stylePasswordField(passwordField);
 
-        JButton loginBtn = new JButton("LOGIN");
-        loginBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
+        JButton loginBtn = new JButton(Strings.LOGIN_BUTTON);
+        loginBtn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 46));
         loginBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
-        UITheme.styleButton(loginBtn, UITheme.SECONDARY, UITheme.PRIMARY);
+        loginBtn.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        loginBtn.setBackground(UITheme.PRIMARY);
+        loginBtn.setForeground(UITheme.SECONDARY);
+        loginBtn.setOpaque(true);
+        loginBtn.setBorderPainted(false);
+        loginBtn.setFocusPainted(false);
+        loginBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         messageLabel = new JLabel(" ");
         messageLabel.setFont(UITheme.FONT_SMALL);
@@ -111,10 +105,10 @@ public class LoginFrame extends JFrame {
         card.add(passLabel);
         card.add(Box.createVerticalStrut(5));
         card.add(passwordField);
-        card.add(Box.createVerticalStrut(20));
-        card.add(loginBtn);
         card.add(Box.createVerticalStrut(10));
         card.add(messageLabel);
+        card.add(Box.createVerticalStrut(10));
+        card.add(loginBtn);
 
         outerPanel.add(card, BorderLayout.CENTER);
         add(outerPanel, BorderLayout.CENTER);
@@ -132,16 +126,12 @@ public class LoginFrame extends JFrame {
         });
     }
 
-    /**
-     * Validates the entered credentials and opens the dashboard on success.
-     * Displays an error message on the form if authentication fails.
-     */
     private void handleLogin() {
         String username = usernameField.getText().trim();
         String password = new String(passwordField.getPassword()).trim();
 
         if (username.isEmpty() || password.isEmpty()) {
-            messageLabel.setText("Please enter username and password.");
+            messageLabel.setText(Strings.LOGIN_ERROR_EMPTY);
             return;
         }
 
