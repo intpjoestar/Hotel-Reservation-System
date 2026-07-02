@@ -11,8 +11,15 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.BufferedWriter;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerDateModel;
@@ -340,6 +347,19 @@ public class DashboardFrame extends JFrame {
         title.setFont(getFontTitle());
         title.setForeground(UITheme.TEXT_DARK);
 
+        JPanel headerRow = new JPanel(new BorderLayout());
+        headerRow.setBackground(UITheme.BACKGROUND);
+        headerRow.add(title, BorderLayout.WEST);
+
+        JButton printReportBtn = new JButton(Strings.REPORT_PRINT);
+        UITheme.styleButton(printReportBtn, UITheme.PRIMARY, UITheme.WHITE);
+        printReportBtn.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                handlePrintDashboardReport();
+            }
+        });
+        headerRow.add(printReportBtn, BorderLayout.EAST);
+
         JPanel cardsGrid = new JPanel(new GridLayout(2, 2, 20, 20));
         cardsGrid.setBackground(UITheme.BACKGROUND);
         cardsGrid.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
@@ -354,7 +374,7 @@ public class DashboardFrame extends JFrame {
         cardsGrid.add(createStatCard(Strings.DASHBOARD_TOTAL_BOOKINGS, totalBookingsLabel, UITheme.SECONDARY));
         cardsGrid.add(createStatCard(Strings.DASHBOARD_ACTIVE_BOOKINGS, activeBookingsLabel, UITheme.DANGER));
 
-        panel.add(title, BorderLayout.NORTH);
+        panel.add(headerRow, BorderLayout.NORTH);
         panel.add(cardsGrid, BorderLayout.CENTER);
 
         return panel;
@@ -482,7 +502,21 @@ public class DashboardFrame extends JFrame {
 
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setBackground(UITheme.BACKGROUND);
-        topPanel.add(title, BorderLayout.NORTH);
+
+        JPanel headerRow = new JPanel(new BorderLayout());
+        headerRow.setBackground(UITheme.BACKGROUND);
+        headerRow.add(title, BorderLayout.WEST);
+
+        JButton printReportBtn = new JButton(Strings.REPORT_PRINT);
+        UITheme.styleButton(printReportBtn, UITheme.PRIMARY, UITheme.WHITE);
+        printReportBtn.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                handlePrintRoomReport();
+            }
+        });
+        headerRow.add(printReportBtn, BorderLayout.EAST);
+
+        topPanel.add(headerRow, BorderLayout.NORTH);
 
         panel.add(topPanel, BorderLayout.NORTH);
         panel.add(roomScroll, BorderLayout.CENTER);
@@ -582,6 +616,144 @@ public class DashboardFrame extends JFrame {
         }
     }
 
+    private void handlePrintRoomReport() {
+        String filePath = "rooms_report_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + ".csv";
+        try (BufferedWriter writer = new BufferedWriter(
+                new OutputStreamWriter(new FileOutputStream(filePath), StandardCharsets.UTF_8))) {
+            writer.write('\ufeff');
+            writer.write("ID,رقم الغرفة,النوع,السعر,الحالة");
+            writer.newLine();
+            for (Room room : system.getRooms()) {
+                String type = room.getType();
+                if ("Single".equals(type)) {
+                    type = Strings.ROOMS_TYPE_SINGLE;
+                } else if ("Double".equals(type)) {
+                    type = Strings.ROOMS_TYPE_DOUBLE;
+                }
+                String status = room.getStatus();
+                if ("AVAILABLE".equals(status)) {
+                    status = Strings.ROOMS_STATUS_AVAILABLE;
+                } else if ("OCCUPIED".equals(status)) {
+                    status = Strings.ROOMS_STATUS_OCCUPIED;
+                }
+                writer.write(room.getId() + "," + room.getRoomNumber() + "," + type + ","
+                    + String.format("%.2f", room.getPrice()) + "," + status);
+                writer.newLine();
+            }
+            JOptionPane.showMessageDialog(this,
+                MessageFormat.format(Strings.REPORT_SAVED, filePath),
+                Strings.DIALOG_SUCCESS, JOptionPane.INFORMATION_MESSAGE);
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this,
+                MessageFormat.format(Strings.REPORT_ERROR, ex.getMessage()),
+                Strings.DIALOG_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void handlePrintDashboardReport() {
+        String filePath = "dashboard_report_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + ".csv";
+        try (BufferedWriter writer = new BufferedWriter(
+                new OutputStreamWriter(new FileOutputStream(filePath), StandardCharsets.UTF_8))) {
+            writer.write('\ufeff');
+            writer.write("المؤشر,القيمة");
+            writer.newLine();
+            writer.write(Strings.DASHBOARD_TOTAL_ROOMS + "," + system.getRooms().size());
+            writer.newLine();
+            int available = 0;
+            for (Room room : system.getRooms()) {
+                if (room.isAvailable()) available++;
+            }
+            writer.write(Strings.DASHBOARD_AVAILABLE_ROOMS + "," + available);
+            writer.newLine();
+            writer.write(Strings.DASHBOARD_TOTAL_BOOKINGS + "," + system.getBookings().size());
+            writer.newLine();
+            int active = 0;
+            for (Booking b : system.getBookings()) {
+                if ("ACTIVE".equals(b.getStatus())) active++;
+            }
+            writer.write(Strings.DASHBOARD_ACTIVE_BOOKINGS + "," + active);
+            writer.newLine();
+            JOptionPane.showMessageDialog(this,
+                MessageFormat.format(Strings.REPORT_SAVED, filePath),
+                Strings.DIALOG_SUCCESS, JOptionPane.INFORMATION_MESSAGE);
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this,
+                MessageFormat.format(Strings.REPORT_ERROR, ex.getMessage()),
+                Strings.DIALOG_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void handlePrintGuestReport() {
+        String filePath = "guests_report_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + ".csv";
+        try (BufferedWriter writer = new BufferedWriter(
+                new OutputStreamWriter(new FileOutputStream(filePath), StandardCharsets.UTF_8))) {
+            writer.write('\ufeff');
+            writer.write("ID," + Strings.GUESTS_COL_NAME + "," + Strings.GUESTS_COL_NATIONAL_ID + "," + Strings.GUESTS_COL_PHONE);
+            writer.newLine();
+            for (Guest guest : system.getGuests()) {
+                writer.write(guest.getId() + "," + guest.getName() + "," + guest.getNationalId() + "," + guest.getPhone());
+                writer.newLine();
+            }
+            JOptionPane.showMessageDialog(this,
+                MessageFormat.format(Strings.REPORT_SAVED, filePath),
+                Strings.DIALOG_SUCCESS, JOptionPane.INFORMATION_MESSAGE);
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this,
+                MessageFormat.format(Strings.REPORT_ERROR, ex.getMessage()),
+                Strings.DIALOG_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void handlePrintBookingReport() {
+        String filePath = "bookings_report_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + ".csv";
+        try (BufferedWriter writer = new BufferedWriter(
+                new OutputStreamWriter(new FileOutputStream(filePath), StandardCharsets.UTF_8))) {
+            writer.write('\ufeff');
+            writer.write("ID," + Strings.BOOKINGS_COL_GUEST + "," + Strings.BOOKINGS_COL_ROOM + ","
+                + Strings.BOOKINGS_COL_CHECK_IN + "," + Strings.BOOKINGS_COL_CHECK_OUT + "," + Strings.BOOKINGS_COL_STATUS);
+            writer.newLine();
+            for (Booking booking : system.getBookings()) {
+                writer.write(booking.getId() + "," + booking.getGuest().getName() + ","
+                    + booking.getRoom().getRoomNumber() + ","
+                    + booking.getCheckIn().toString() + ","
+                    + booking.getCheckOut().toString() + ","
+                    + booking.getStatus());
+                writer.newLine();
+            }
+            JOptionPane.showMessageDialog(this,
+                MessageFormat.format(Strings.REPORT_SAVED, filePath),
+                Strings.DIALOG_SUCCESS, JOptionPane.INFORMATION_MESSAGE);
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this,
+                MessageFormat.format(Strings.REPORT_ERROR, ex.getMessage()),
+                Strings.DIALOG_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void handlePrintUserReport() {
+        String filePath = "users_report_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + ".csv";
+        try (BufferedWriter writer = new BufferedWriter(
+                new OutputStreamWriter(new FileOutputStream(filePath), StandardCharsets.UTF_8))) {
+            writer.write('\ufeff');
+            writer.write("ID," + Strings.USERS_COL_USERNAME + "," + Strings.USERS_COL_ROLE);
+            writer.newLine();
+            for (User user : system.getUsers()) {
+                String role = user.getRole();
+                if ("ADMIN".equals(role)) role = Strings.USERS_ROLE_ADMIN;
+                else if ("RECEPTIONIST".equals(role)) role = Strings.USERS_ROLE_RECEPTIONIST;
+                writer.write(user.getId() + "," + user.getUsername() + "," + role);
+                writer.newLine();
+            }
+            JOptionPane.showMessageDialog(this,
+                MessageFormat.format(Strings.REPORT_SAVED, filePath),
+                Strings.DIALOG_SUCCESS, JOptionPane.INFORMATION_MESSAGE);
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this,
+                MessageFormat.format(Strings.REPORT_ERROR, ex.getMessage()),
+                Strings.DIALOG_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     private void loadRoomData() {
         roomTableModel.setRowCount(0);
         for (Room room : system.getRooms()) {
@@ -669,7 +841,21 @@ public class DashboardFrame extends JFrame {
 
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setBackground(UITheme.BACKGROUND);
-        topPanel.add(title, BorderLayout.NORTH);
+
+        JPanel headerRow = new JPanel(new BorderLayout());
+        headerRow.setBackground(UITheme.BACKGROUND);
+        headerRow.add(title, BorderLayout.WEST);
+
+        JButton printReportBtn = new JButton(Strings.REPORT_PRINT);
+        UITheme.styleButton(printReportBtn, UITheme.PRIMARY, UITheme.WHITE);
+        printReportBtn.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                handlePrintGuestReport();
+            }
+        });
+        headerRow.add(printReportBtn, BorderLayout.EAST);
+
+        topPanel.add(headerRow, BorderLayout.NORTH);
 
         panel.add(topPanel, BorderLayout.NORTH);
         panel.add(guestScroll, BorderLayout.CENTER);
@@ -839,7 +1025,21 @@ public class DashboardFrame extends JFrame {
 
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setBackground(UITheme.BACKGROUND);
-        topPanel.add(title, BorderLayout.NORTH);
+
+        JPanel headerRow = new JPanel(new BorderLayout());
+        headerRow.setBackground(UITheme.BACKGROUND);
+        headerRow.add(title, BorderLayout.WEST);
+
+        JButton printReportBtn = new JButton(Strings.REPORT_PRINT);
+        UITheme.styleButton(printReportBtn, UITheme.PRIMARY, UITheme.WHITE);
+        printReportBtn.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                handlePrintBookingReport();
+            }
+        });
+        headerRow.add(printReportBtn, BorderLayout.EAST);
+
+        topPanel.add(headerRow, BorderLayout.NORTH);
 
         panel.add(topPanel, BorderLayout.NORTH);
         panel.add(bookingScroll, BorderLayout.CENTER);
@@ -1153,7 +1353,21 @@ public class DashboardFrame extends JFrame {
 
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setBackground(UITheme.BACKGROUND);
-        topPanel.add(title, BorderLayout.NORTH);
+
+        JPanel headerRow = new JPanel(new BorderLayout());
+        headerRow.setBackground(UITheme.BACKGROUND);
+        headerRow.add(title, BorderLayout.WEST);
+
+        JButton printReportBtn = new JButton(Strings.REPORT_PRINT);
+        UITheme.styleButton(printReportBtn, UITheme.PRIMARY, UITheme.WHITE);
+        printReportBtn.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                handlePrintUserReport();
+            }
+        });
+        headerRow.add(printReportBtn, BorderLayout.EAST);
+
+        topPanel.add(headerRow, BorderLayout.NORTH);
 
         panel.add(topPanel, BorderLayout.NORTH);
         panel.add(userScroll, BorderLayout.CENTER);

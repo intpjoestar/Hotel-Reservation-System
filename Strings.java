@@ -119,6 +119,11 @@ public class Strings {
     public static final String USERS_ROLE_RECEPTIONIST = "موظف استقبال";
     public static final String USERS_CONFIRM_DELETE = "حذف المستخدم رقم {0}؟";
 
+    // ========== REPORT ==========
+    public static final String REPORT_PRINT = "طباعة تقرير";
+    public static final String REPORT_SAVED = "تم حفظ التقرير في: {0}";
+    public static final String REPORT_ERROR = "خطأ في حفظ التقرير: {0}";
+
     // ========== DIALOGS ==========
     public static final String DIALOG_VALIDATION_ERROR = "خطأ في التحقق";
     public static final String DIALOG_ERROR = "خطأ";
